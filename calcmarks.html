@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CU Internal Marks Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .subject-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .subject-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid transparent;
+        }
+
+        .subject-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .subject-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .calculator-section {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .calculator-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .input-group:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .result-section {
+            display: none;
+            text-align: center;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .gauge-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px;
+        }
+
+        .gauge-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .gauge-bg {
+            fill: none;
+            stroke: #e1e5e9;
+            stroke-width: 20;
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke-width: 20;
+            stroke-linecap: round;
+            transition: stroke-dasharray 1s ease-out;
+        }
+
+        .gauge-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .result-details {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .breakdown-item:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e1e5e9;
+            color: #666;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .subject-selector {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CU Internal Marks Calculator</h1>
+            <p>Calculate your internal marks for Chandigarh University</p>
+        </div>
+
+        <div class="subject-selector">
+            <button class="subject-btn active" onclick="selectSubject('theory')">Theory (40 marks)</button>
+            <button class="subject-btn" onclick="selectSubject('hybrid')">Hybrid (70 marks)</button>
+            <button class="subject-btn" onclick="selectSubject('practical')">Practical (100 marks)</button>
+        </div>
+
+        <!-- Theory Calculator -->
+        <div id="theory" class="calculator-section active">
+            <div class="input-grid">
+                <div class="input-group">
+                    <label for="theory-assignment">Assignment Marks</label>
+                    <input type="number" id="theory-assignment" step="0.01" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="theory-attendance">Attendance Marks</label>
+                    <input type="number" id="theory-attendance" step="0.01" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="theory-casestudy">Case Study Marks (out of 16)</label>
+                    <input type="number" id="theory-casestudy" step="0.01" min="0" max="16">
+                </div>
+                <div class="input-group">
+                    <label for="theory-mst1">MST 1 Marks</label>
+                    <input type="number" id="theory-mst1" step="0.01" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="theory-mst2">MST 2 Marks</label>
+                    <input type="number" id="theory-mst2" step="0.01" min="0">
+                </div>
+            </div>
+            <button class="calculate-btn" onclick="calculateTheory()">Calculate Theory Marks</button>
+        </div>
+
+        <!-- Hybrid Calculator -->
+        <div id="hybrid" class="calculator-section">
+            <div class="input-grid">
+                <div class="input-group">
+                    <label for="hybrid-assignment">Assignment Marks (out of 12)</label>
+                    <input type="number" id="hybrid-assignment" step="0.01" min="0" max="12">
+                </div>
+                <div class="input-group">
+                    <label for="hybrid-attendance">Attendance Marks</label>
+                    <input type="number" id="hybrid-attendance" step="0.01" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="hybrid-casestudy">Case Study Marks (out of 16)</label>
+                    <input type="number" id="hybrid-casestudy" step="0.01" min="0" max="16">
+                </div>
+                <div class="input-group">
+                    <label for="hybrid-mst1">MST 1 Marks</label>
+                    <input type="number" id="hybrid-mst1" step="0.01" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="hybrid-mst2">MST 2 Marks</label>
+                    <input type="number" id="hybrid-mst2" step="0.01" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="hybrid-endsem">End Semester Practical (out of 40)</label>
+                    <input type="number" id="hybrid-endsem" step="0.01" min="0" max="40">
+                </div>
+                <div class="input-group">
+                    <label for="hybrid-labmst">Lab MST Marks (out of 15)</label>
+                    <input type="number" id="hybrid-labmst" step="0.01" min="0" max="15">
+                </div>
+                <div class="input-group">
+                    <label for="hybrid-assess1">Assessment 1 (out of 15)</label>
+                    <input type="number" id="hybrid-assess1" step="0.01" min="0" max="15">
+                </div>
+                <div class="input-group">
+                    <label for="hybrid-assess2">Assessment 2 (out of 15)</label>
+                    <input type="number" id="hybrid-assess2" step="0.01" min="0" max="15">
+                </div>
+                <div class="input-group">
+                    <label for="hybrid-assess3">Assessment 3 (out of 15)</label>
+                    <input type="number" id="hybrid-assess3" step="0.01" min="0" max="15">
+                </div>
+            </div>
+            <button class="calculate-btn" onclick="calculateHybrid()">Calculate Hybrid Marks</button>
+        </div>
+
+        <!-- Practical Calculator -->
+        <div id="practical" class="calculator-section">
+            <div class="input-grid">
+                <div class="input-group">
+                    <label for="practical-labmst">Lab MST Marks (out of 15)</label>
+                    <input type="number" id="practical-labmst" step="0.01" min="0" max="15">
+                </div>
+                <div class="input-group">
+                    <label for="practical-assess1">Assessment 1</label>
+                    <input type="number" id="practical-assess1" step="0.01" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="practical-assess2">Assessment 2</label>
+                    <input type="number" id="practical-assess2" step="0.01" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="practical-assess3">Assessment 3</label>
+                    <input type="number" id="practical-assess3" step="0.01" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="practical-endsem">End Semester Practical</label>
+                    <input type="number" id="practical-endsem" step="0.01" min="0">
+                </div>
+            </div>
+            <button class="calculate-btn" onclick="calculatePractical()">Calculate Practical Marks</button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="result-section">
+            <div class="gauge-container">
+                <svg class="gauge-svg" viewBox="0 0 200 200">
+                    <circle class="gauge-bg" cx="100" cy="100" r="80"></circle>
+                    <circle class="gauge-fill" cx="100" cy="100" r="80" id="gauge-progress"></circle>
+                </svg>
+                <div class="gauge-text" id="gauge-percentage">0%</div>
+            </div>
+            <h2 id="result-title">Your Internal Marks</h2>
+            <div id="result-breakdown" class="result-details"></div>
+        </div>
+
+        <div class="footer">
+            Made with ❤️ by <a href="https://atinders-portfolio.vercel.app/" target="_blank">Atinder</a>
+        </div>
+    </div>
+
+    <script>
+        let currentSubject = 'theory';
+
+        function selectSubject(subject) {
+            // Update buttons
+            document.querySelectorAll('.subject-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update sections
+            document.querySelectorAll('.calculator-section').forEach(section => section.classList.remove('active'));
+            document.getElementById(subject).classList.add('active');
+            
+            // Hide results
+            document.getElementById('results').classList.remove('show');
+            
+            currentSubject = subject;
+        }
+
+        function calculateTheory() {
+            const assignment = parseFloat(document.getElementById('theory-assignment').value) || 0;
+            const attendance = parseFloat(document.getElementById('theory-attendance').value) || 0;
+            const caseStudy = parseFloat(document.getElementById('theory-casestudy').value) || 0;
+            const mst1 = parseFloat(document.getElementById('theory-mst1').value) || 0;
+            const mst2 = parseFloat(document.getElementById('theory-mst2').value) || 0;
+
+            const caseStudyConverted = (caseStudy / 16) * 8;
+            const mstAverage = (mst1 + mst2) / 2;
+            const totalMarks = assignment + attendance + caseStudyConverted + mstAverage;
+
+            displayResults(totalMarks, 40, 'Theory', {
+                'Assignment Marks': assignment,
+                'Attendance Marks': attendance,
+                'Case Study (Converted)': caseStudyConverted.toFixed(2),
+                'MST Average': mstAverage.toFixed(2),
+                'Total Internal Marks': totalMarks.toFixed(2)
+            });
+        }
+
+        function calculateHybrid() {
+            const assignment = parseFloat(document.getElementById('hybrid-assignment').value) || 0;
+            const attendance = parseFloat(document.getElementById('hybrid-attendance').value) || 0;
+            const caseStudy = parseFloat(document.getElementById('hybrid-casestudy').value) || 0;
+            const mst1 = parseFloat(document.getElementById('hybrid-mst1').value) || 0;
+            const mst2 = parseFloat(document.getElementById('hybrid-mst2').value) || 0;
+            const endSem = parseFloat(document.getElementById('hybrid-endsem').value) || 0;
+            const labMst = parseFloat(document.getElementById('hybrid-labmst').value) || 0;
+            const assess1 = parseFloat(document.getElementById('hybrid-assess1').value) || 0;
+            const assess2 = parseFloat(document.getElementById('hybrid-assess2').value) || 0;
+            const assess3 = parseFloat(document.getElementById('hybrid-assess3').value) || 0;
+
+            const assignmentWeighted = (assignment / 12) * 6;
+            const caseStudyWeighted = (caseStudy / 16) * 8;
+            const mstAverage = (mst1 + mst2) / 4;
+            const endSemWeighted = (endSem / 40) * 20;
+            const labMstWeighted = (labMst / 15) * 4;
+            const totalAssessmentsWeighted = (((assess1 + assess2 + assess3) / 3) / 15) * 20;
+
+            const totalMarks = assignmentWeighted + attendance + caseStudyWeighted + mstAverage +
+                             totalAssessmentsWeighted + endSemWeighted + labMstWeighted;
+
+            displayResults(totalMarks, 70, 'Hybrid', {
+                'Assignment (Weighted)': assignmentWeighted.toFixed(2),
+                'Attendance Marks': attendance,
+                'Case Study (Weighted)': caseStudyWeighted.toFixed(2),
+                'MST Average': mstAverage.toFixed(2),
+                'Assessments (Weighted)': totalAssessmentsWeighted.toFixed(2),
+                'End Sem (Weighted)': endSemWeighted.toFixed(2),
+                'Lab MST (Weighted)': labMstWeighted.toFixed(2),
+                'Total Internal Marks': totalMarks.toFixed(2)
+            });
+        }
+
+        function calculatePractical() {
+            const labMst = parseFloat(document.getElementById('practical-labmst').value) || 0;
+            const assess1 = parseFloat(document.getElementById('practical-assess1').value) || 0;
+            const assess2 = parseFloat(document.getElementById('practical-assess2').value) || 0;
+            const assess3 = parseFloat(document.getElementById('practical-assess3').value) || 0;
+            const endSem = parseFloat(document.getElementById('practical-endsem').value) || 0;
+
+            const adjustedLabMarks = (labMst / 15) * 15;
+            const totalAssessments = assess1 + assess2 + assess3;
+            const finalMarks = totalAssessments + adjustedLabMarks + endSem;
+
+            displayResults(finalMarks, 100, 'Practical', {
+                'Lab MST (Adjusted)': adjustedLabMarks.toFixed(2),
+                'Assessment 1': assess1,
+                'Assessment 2': assess2,
+                'Assessment 3': assess3,
+                'End Semester Practical': endSem,
+                'Final Marks': finalMarks.toFixed(2)
+            });
+        }
+
+        function displayResults(marks, maxMarks, type, breakdown) {
+            const percentage = Math.min((marks / maxMarks) * 100, 100);
+            
+            // Update gauge
+            updateGauge(percentage);
+            
+            // Update result text
+            document.getElementById('result-title').textContent = 
+                `Your ${type} Internal Marks: ${marks.toFixed(2)}/${maxMarks}`;
+            
+            // Update breakdown
+            const breakdownDiv = document.getElementById('result-breakdown');
+            breakdownDiv.innerHTML = '';
+            
+            Object.entries(breakdown).forEach(([key, value]) => {
+                const item = document.createElement('div');
+                item.className = 'breakdown-item';
+                item.innerHTML = `<span>${key}:</span><span>${value}</span>`;
+                breakdownDiv.appendChild(item);
+            });
+            
+            // Show results
+            document.getElementById('results').classList.add('show');
+        }
+
+        function updateGauge(percentage) {
+            const circle = document.getElementById('gauge-progress');
+            const text = document.getElementById('gauge-percentage');
+            
+            const circumference = 2 * Math.PI * 80;
+            const offset = circumference - (percentage / 100) * circumference;
+            
+            // Color based on percentage
+            let color;
+            if (percentage >= 80) color = '#4CAF50';
+            else if (percentage >= 60) color = '#FF9800';
+            else color = '#F44336';
+            
+            circle.style.stroke = color;
+            circle.style.strokeDasharray = circumference;
+            circle.style.strokeDashoffset = offset;
+            
+            // Animate percentage text
+            let current = 0;
+            const increment = percentage / 50;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= percentage) {
+                    current = percentage;
+                    clearInterval(timer);
+                }
+                text.textContent = Math.round(current) + '%';
+            }, 20);
+        }
+    </script>
+</body>
+</html>
