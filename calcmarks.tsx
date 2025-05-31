@@ -4,6 +4,7 @@ interface BreakdownItem {
   [key: string]: string | number;
 }
 
+
 interface ResultData {
   marks: number;
   maxMarks: number;
